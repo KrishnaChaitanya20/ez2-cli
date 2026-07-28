@@ -17,7 +17,7 @@ var ctx context.Context
 
 func main() {
 	ctx = context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("ap-south-1"))
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
