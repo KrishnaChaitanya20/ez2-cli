@@ -1,1 +1,4 @@
+.vscode
+agents/
 ez2.exe
+**/dist
