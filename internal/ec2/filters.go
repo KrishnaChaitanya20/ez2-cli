@@ -1,4 +1,4 @@
-package utils
+package ec2client
 
 import (
 	"fmt"
@@ -8,33 +8,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-type Ec2Instances struct {
-	InstanceID   string
-	InstanceType string
-	PublicIP     string
-	PrivateIP    string
-	Status       types.InstanceStateName
-	InstanceName string
-}
-
-func GetNameTag(tags []types.Tag) string {
-
-	for _, tag := range tags {
-		if *tag.Key == "Name" {
-			return aws.ToString(tag.Value)
-		}
-	}
-
-	return ""
-}
-
-func ProcessTags(args []string) []types.Filter {
+func processTags(args []string) []types.Filter {
 	var filters []types.Filter
 
 	for _, arg := range args {
 		filterKey, filterVal, found := strings.Cut(arg, "=")
 
-		if !found {
+		if !found || filterKey == "" || filterVal == "" {
 			fmt.Printf("Ignoring Invalid argument: %s\n", arg)
 			continue
 		}
@@ -50,10 +30,9 @@ func ProcessTags(args []string) []types.Filter {
 			filterKey = ""
 		}
 
-		filter, isPresent := findIn(filters, filterKey)
-
+		filter, isPresent := findIn(&filters, filterKey)
 		if isPresent {
-			filter.Values = append(filter.Values, filterVal)
+			filter.Values = append(filter.Values[:], filterVal)
 		} else {
 			filters = append(filters, types.Filter{
 				Name:   &filterKey,
@@ -65,11 +44,33 @@ func ProcessTags(args []string) []types.Filter {
 	return filters
 }
 
-func findIn(filters []types.Filter, filterKey string) (*types.Filter, bool) {
-	for _, filter := range filters {
+func findIn(filters *[]types.Filter, filterKey string) (*types.Filter, bool) {
+	for i, filter := range *filters {
 		if *filter.Name == filterKey {
-			return &filter, true
+			return &(*filters)[i], true
 		}
 	}
 	return &types.Filter{}, false
+}
+
+func getTagValue(tags []types.Tag, tagName string) string {
+
+	for _, tag := range tags {
+		if *tag.Key == tagName {
+			return aws.ToString(tag.Value)
+		}
+	}
+
+	return ""
+}
+
+func extractFlags(args []string) []string {
+	var flags []string
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") {
+			flags = append(flags, arg)
+		}
+	}
+	return flags
 }
