@@ -46,11 +46,11 @@ func GetInstanceList(ctx context.Context, args []string) []Ec2Instances {
 
 }
 
-func ChangeInstanceState(ctx context.Context, subcmd string, args []string) {
+func ChangeInstanceState(ctx context.Context, subcmd string, args []string) error {
 
 	if len(args) == 0 {
 		fmt.Println("Please provide instanceid/Name")
-		return
+		return nil
 	}
 
 	var ids []string
@@ -81,18 +81,34 @@ func ChangeInstanceState(ctx context.Context, subcmd string, args []string) {
 		}
 	}
 
-	switch subcmd {
-	case "start":
-		ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{InstanceIds: ids})
-		fmt.Printf("Starting Instance/s: %v\n", ids)
-	case "stop":
-		ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{InstanceIds: ids})
-		fmt.Printf("Stopping Instance/s: %v\n", ids)
-	case "restart":
-		ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{InstanceIds: ids})
-		fmt.Printf("Restarting Instance/s: %v\n", ids)
+	if len(ids) == 0 {
+		return errors.New("No valid instanceid/Name")
 	}
 
+	switch subcmd {
+	case "start":
+		output, err := ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{InstanceIds: ids})
+		if err != nil {
+			return err
+		}
+		printStateTransition(output.StartingInstances)
+
+	case "stop":
+		output, err := ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{InstanceIds: ids})
+		if err != nil {
+			return err
+		}
+		printStateTransition(output.StoppingInstances)
+
+	case "restart":
+		_, err := ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{InstanceIds: ids})
+		if err != nil {
+			return err
+		}
+		fmt.Println("Rebooting Instances:", ids)
+
+	}
+	return nil
 }
 
 func ConnectToInstance(ctx context.Context, idOrName string, user string) (string, error) {
@@ -195,4 +211,10 @@ func fetchInstanceFromInstanceId(ctx context.Context, instanceId string) (types.
 		return types.Instance{}, errors.New("no Instances Found.")
 	}
 	return resp.Reservations[0].Instances[0], nil
+}
+
+func printStateTransition(transitioningInstance []types.InstanceStateChange) {
+	for _, instance := range transitioningInstance {
+		fmt.Printf("Instance %s is now %s\n", *instance.InstanceId, instance.CurrentState.Name)
+	}
 }
