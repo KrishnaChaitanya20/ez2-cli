@@ -51,7 +51,12 @@ func main() {
 		idOrName := args[1]
 		user := args[2]
 
-		ec2client.ConnectToInstance(ctx, idOrName, user)
+		connectionString, err := ec2client.ConnectToInstance(ctx, idOrName, user)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(connectionString)
 
 	default:
 		fmt.Println("Invalid usage ")
