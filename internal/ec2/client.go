@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -50,6 +51,46 @@ func ChangeInstanceState(ctx context.Context, subcmd string, args []string) {
 	if len(args) == 0 {
 		fmt.Println("Please provide instanceid/Name")
 		return
+	}
+
+	var ids []string
+	var instanceIDRegex = regexp.MustCompile(`^i-[a-z0-9]{17}$`)
+
+	for _, arg := range args {
+		filterKey, filterVal, found := strings.Cut(arg, "=")
+
+		if !found || filterKey == "" || filterVal == "" {
+			fmt.Printf("Ignoring Invalid argument: %s\n", arg)
+			continue
+		}
+
+		switch filterKey {
+		case "id":
+			if !instanceIDRegex.MatchString(filterVal) {
+				fmt.Printf("Ignoring Invalid Instance ID: %s\n", filterVal)
+				continue
+			}
+			ids = append(ids, filterVal)
+		case "name":
+			i, err := fetchInstanceFromInstanceName(ctx, filterVal)
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				continue
+			}
+			ids = append(ids, aws.ToString(i.InstanceId))
+		}
+	}
+
+	switch subcmd {
+	case "start":
+		ec2Client.StartInstances(ctx, &ec2.StartInstancesInput{InstanceIds: ids})
+		fmt.Printf("Starting Instance/s: %v\n", ids)
+	case "stop":
+		ec2Client.StopInstances(ctx, &ec2.StopInstancesInput{InstanceIds: ids})
+		fmt.Printf("Stopping Instance/s: %v\n", ids)
+	case "restart":
+		ec2Client.RebootInstances(ctx, &ec2.RebootInstancesInput{InstanceIds: ids})
+		fmt.Printf("Restarting Instance/s: %v\n", ids)
 	}
 
 }
