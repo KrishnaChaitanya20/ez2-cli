@@ -1,6 +1,6 @@
 # EZ2 CLI
 
-A simple CLI tool for listing, starting, and stopping EC2 instances.
+A simple CLI tool for listing, starting, stopping, and rebooting EC2 instances.
 
 ## Why?
 
@@ -8,7 +8,7 @@ There are already great tools for managing AWS infrastructure — CloudFormation
 
 But for my use case, none of that fit well. Most of the time, my EC2 instances are already created (manually or via automation), and the *only* thing I actually need day-to-day is to start and stop them. Opening a browser and logging into the AWS console just to click "Start" or "Stop" felt like overkill, and while the AWS CLI absolutely can do this, it's a much bigger tool than I need for such a small, repetitive task.
 
-So I built EZ2 CLI: a small, focused tool that does exactly three things — list, start, and stop EC2 instances. Nothing more.
+So I built EZ2 CLI: a small, focused tool that does a few things — list, start, stop, restart, and connect to EC2 instances. Nothing more.
 
 ## Configuration
 
@@ -35,7 +35,7 @@ AWS_PROFILE=<your-profile-name>
 ## Usage
 
 ```
-Available subcommands: list, ls, start, stop
+Available subcommands: list, ls, start, stop, restart, connect
 
 ez2cli [subcommand] [args...]
 
@@ -47,8 +47,11 @@ ez2cli list name=<tag:Name>
 ez2cli list id=<instance-id>
 ez2cli list state=<instance-state>
 
-ez2cli start id|name <id|name> [<id2|name2> ...]
-ez2cli stop id|name <id|name> [<id2|name2> ...]
+ez2cli start id=<instance-id> name=<instance-name> [id=<id2> name=<name2> ...]
+ez2cli stop id=<instance-id> name=<instance-name> [id=<id2> name=<name2> ...]
+ez2cli restart id=<instance-id> name=<instance-name> [id=<id2> name=<name2> ...]
+
+ez2cli connect <instance-id|instance-name> <user>
 ```
 
 ## Note

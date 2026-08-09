@@ -49,7 +49,8 @@ func GetInstanceList(ctx context.Context, args []string) []Ec2Instances {
 func ChangeInstanceState(ctx context.Context, subcmd string, args []string) error {
 
 	if len(args) == 0 {
-		fmt.Println("Please provide instanceid/Name")
+		fmt.Println("Please provide instance id/name")
+		fmt.Println("usage: ez2cli <start|stop|restart> id=<instance-id> [name=<instance-name> ...]")
 		return nil
 	}
 
@@ -82,7 +83,7 @@ func ChangeInstanceState(ctx context.Context, subcmd string, args []string) erro
 	}
 
 	if len(ids) == 0 {
-		return errors.New("No valid instanceid/Name")
+		return errors.New("no valid instance id/name provided")
 	}
 
 	switch subcmd {

@@ -28,7 +28,7 @@ func main() {
 
 	if len(args) == 0 {
 		fmt.Println("No subcommand provided")
-		fmt.Println("Available subcommands: list, ls, stop, start")
+		fmt.Println("Available subcommands: list, ls, start, stop, restart, connect")
 		fmt.Println("Usage: ez2cli <subcommand> [args...]")
 		return
 	}
@@ -41,11 +41,14 @@ func main() {
 		instances := ec2client.GetInstanceList(ctx, args[1:])
 		display.PrintInstancesTable(instances)
 	case "stop", "start", "restart":
-		ec2client.ChangeInstanceState(ctx, subcmd, args[1:])
+		if err := ec2client.ChangeInstanceState(ctx, subcmd, args[1:]); err != nil {
+			fmt.Println(err)
+			return
+		}
 	case "connect":
 		if len(args[1:]) != 2 {
 			fmt.Println("Invalid Arguments")
-			fmt.Println("usage: ez2 connect <instanceid/Name> <user>")
+			fmt.Println("usage: ez2cli connect <instanceid/Name> <user>")
 			return
 		}
 		idOrName := args[1]
@@ -60,7 +63,7 @@ func main() {
 
 	default:
 		fmt.Println("Invalid usage ")
-		fmt.Println("Available subcommands: list,ls,stop,start")
+		fmt.Println("Available subcommands: list, ls, start, stop, restart, connect")
 
 	}
 
